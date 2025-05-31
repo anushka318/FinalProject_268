@@ -20,5 +20,5 @@ Large integers are represented as arrays of 64-bit limbs (uint64_t). The maximum
 - `rsa_decrypt_kernel`: Decrypts a ciphertext using private key (d, n)
 
 Compile command for collab
-!nvcc -o rsa_cuda rsa.cu -O3
+!nvcc -o rsa_exec rsa.cu modexp.cu
 
