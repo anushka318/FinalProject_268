@@ -89,6 +89,42 @@ static __device__ __forceinline__ int cmp_limbs(
     return 0;
 }
 
+__device__ void barrettReductionKernel(
+    const uint64_t* x,        
+    const uint64_t* m,        
+    const uint64_t* mu,       
+    uint64_t* result,         
+    int digits                
+) {
+    int k = digits;
+    uint64_t q1[MAX_DIGITS];
+    uint64_t q2[2 * MAX_DIGITS];
+    uint64_t q3[MAX_DIGITS];
+    uint64_t r1[MAX_DIGITS];
+    uint64_t r2[2 * MAX_DIGITS];
+
+    for (int i = 0; i < k; ++i) {
+        q1[i] = i < digits - (k - 1) ? x[i + k - 1] : 0;
+    }
+
+    mul_limbs(q1, mu, q2, k);
+
+    for (int i = 0; i < k; ++i) {
+        q3[i] = i < 2 * k - (k + 1) ? q2[i + k + 1] : 0;
+    }
+
+    for (int i = 0; i <= k; ++i) {
+        r1[i] = i < digits ? x[i] : 0;
+    }
+
+    mul_limbs(q3, m, r2, k);
+
+    sub_limbs(r1, r2, result, k + 1);
+
+    while (cmp_limbs(result, m, k) >= 0) {
+        sub_limbs(result, m, result, k);
+    }
+}
 // Modular exponentiation
 static __device__ void modexp_limbs(
     const uint64_t* base,
