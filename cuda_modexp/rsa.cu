@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MAX_DIGITS 4
+
 static __device__ void modexp_limbs(
     const uint64_t* base,
     const uint64_t* exp,
@@ -115,10 +118,17 @@ uint64_t* d_mu;
 
 int main() {
 uint64_t message[MAX_DIGITS] = {
-    0x5f7463656a6f7250ULL,  // bytes 0-7 reversed in little-endian order
-    0x636e65622020757063ULL, // bytes 8-15 reversed
-    0x00006b72616d6868ULL,   // bytes 16-21 + padding zeros
-    0x0ULL                   // padding limb
+
+        0x724250656a6f7250ULL,
+        0x5f7570635f636574ULL,
+        0x724250656a6f7250ULL,
+        0x5f7570635f636574ULL
+
+
+//    0x5f7463656a6f7250ULL,  // bytes 0-7 reversed in little-endian order
+ //   0x636e65622020757063ULL, // bytes 8-15 reversed
+ //   0x00006b72616d6868ULL,   // bytes 16-21 + padding zeros
+ //   0x0ULL                   // padding limb
 };
 
 
