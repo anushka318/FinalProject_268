@@ -4,7 +4,7 @@
 #include <cuda_runtime.h>
 #include <stdint.h>
 
-#define MAX_DIGITS 32
+#define MAX_DIGITS 4
 
 // Basic limb operations
 static __device__ __forceinline__ void add_limbs(
