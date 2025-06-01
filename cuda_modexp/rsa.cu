@@ -174,7 +174,7 @@ uint64_t message[MAX_DIGITS] = {
     cudaDeviceSynchronize();
 
     // Copy cipher back to host
-    cudaMemcpy(cipher, d_cipher, MAX_DIGITS * sizeof(uint64_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(cipher, d_cipher, MAX_DIGITS * sizeof(uint64_t), cudaMemcpyDeviceToHost);
 
     printf("Encrypted message (hex):\n");
     for(int i = MAX_DIGITS - 1; i >= 0; i--) {
