@@ -1,3 +1,11 @@
+/*
+
+Use this command to execute
+!nvcc -arch=sm_75 rsa.cu -o rsa
+!./rsa
+
+*/
+
 #include <stdio.h>    
 #include <stdlib.h>   
 #include <string.h>   
