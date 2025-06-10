@@ -11,8 +11,9 @@ Use this command to execute
 #include <string.h>   
 #include <cuda_runtime.h>
 #include <stdint.h>
-int BLOCK_SIZE = 256; // Number of threads per block in CUDA kernels
-int NUM_BLOCKS = 32;  // Number of blocks in CUDA kernels
+
+int BLOCK_SIZE = 256;
+int NUM_BLOCKS = 32; 
 // Not used currently
 
 
@@ -25,14 +26,14 @@ int NUM_BLOCKS = 32;  // Number of blocks in CUDA kernels
 }
 
 
-// Timer for performance benchmarking
+// TIMERS FOR BENCHMARKING
 void startTimer(cudaEvent_t* start, cudaEvent_t* stop) {
     CHECK_CUDA_ERROR(cudaEventCreate(start)); 
     CHECK_CUDA_ERROR(cudaEventCreate(stop));
     CHECK_CUDA_ERROR(cudaEventRecord(*start));
 }
 
-// Timer for performance benchmarking
+
 float stopTimer(cudaEvent_t start, cudaEvent_t stop) {
     float milliseconds = 0;
     CHECK_CUDA_ERROR(cudaEventRecord(stop));
@@ -43,7 +44,7 @@ float stopTimer(cudaEvent_t start, cudaEvent_t stop) {
     return milliseconds;
 }
 
-// Provides Device Information
+// DEVICE INFORMATION
 void DeviceInformation() {
     cudaDeviceProp prop; 
     CHECK_CUDA_ERROR(cudaGetDeviceProperties(&prop, 0)); 
@@ -60,52 +61,41 @@ void DeviceInformation() {
 
 }
 
-// print a uint64_t value in hex
+// PRINT U64
 void print_u64(const char* label, uint64_t value) {
     printf("%s: %llu (0x%llx)\n", label, value, value); 
 }
 
-// Function to compute the Barrett constant mu
-// mu = floor(2^128 / n)
+// MU CALCULATION
 uint64_t compute_barrett_mu(uint64_t n) {
     if (n == 0) { 
         fprintf(stderr, "Error: Modulus - n cannot be zero for Barrett mu calculation\n"); 
         exit(EXIT_FAILURE); 
     }
-    if (n == 1) { // Handles the special case where n is 1 (any number modulo 1 is 0)
+    if (n == 1) {
         return 0xFFFFFFFFFFFFFFFFULL; 
     }
 
-    // Computes mu = floor( (2^128 - 1) / n ) + 1, which is equivalent to floor(2^128 / n)
-    // (__uint128_t)-1 represents 2^128 - 1 for the 128-bit unsigned type
     uint64_t mu_val = (uint64_t)((((__uint128_t)-1) / n) + 1);
     return mu_val; 
 }
 
-// Function for Barrett modular reduction
-// Computes X % n using Barrett's algorithm, where X is a 128-bit number
+// BARRET REDUCTION FUNCTION
 __device__ uint64_t barrett_reduce(uint64_t x_low, uint64_t x_high, uint64_t n, uint64_t mu) {
 
     __uint128_t X = ((__uint128_t)x_high << 64) | x_low;
-
-    // high 64 bits of (x_low * mu)
     uint64_t tmp1_high_xl_mu = __umul64hi(x_low, mu);
     
-    // high 64 bits of (x_high * mu)
     uint64_t tmp2_high_xh_mu = __umul64hi(x_high, mu);
-    // low 64 bits of (x_high * mu)
     uint64_t tmp2_low_xh_mu = x_high * mu;
 
     uint64_t sum_mid_part = tmp2_low_xh_mu + tmp1_high_xl_mu;
     uint64_t carry_to_q = (sum_mid_part < tmp2_low_xh_mu); 
 
-    // highest 64 bits of X * mu
     uint64_t q_val = tmp2_high_xh_mu + carry_to_q;
 
-    // Calculates r = X - q_val * n (128-bit subtraction)
     __uint128_t r = X - ((__uint128_t)q_val * n);
 
-    // Performs final subtractions to ensure 0 <= r < n 
     while (r >= n) {
         r -= n;
     }
@@ -113,8 +103,7 @@ __device__ uint64_t barrett_reduce(uint64_t x_low, uint64_t x_high, uint64_t n, 
     return (uint64_t)r; 
 }
 
-// Function for modular exponentiation using Barrett reduction
-// Computes base^exp % n
+// BARRET MODULAR EXPONENTIATION
 __device__ uint64_t modexp_barrett(uint64_t base, uint64_t exp, uint64_t n, uint64_t mu) {
     uint64_t result = 1; 
     base = base % n;     
@@ -126,12 +115,12 @@ __device__ uint64_t modexp_barrett(uint64_t base, uint64_t exp, uint64_t n, uint
         }
         __uint128_t prod = (__uint128_t)base * base; 
         base = barrett_reduce((uint64_t)prod, (uint64_t)(prod >> 64), n, mu);
-        exp >>= 1; // Right shifts exponent by 1 (effectively divides by 2)
+        exp >>= 1;
     }
     return result; 
 }
 
-// Global CUDA kernel to launch RSA operation
+// RSA LAUNCH FUNCTION
 __global__ void rsa_barrett_kernel(uint64_t* out, uint64_t base, uint64_t exp, uint64_t n, uint64_t mu) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         out[0] = modexp_barrett(base, exp, n, mu); 
@@ -139,9 +128,8 @@ __global__ void rsa_barrett_kernel(uint64_t* out, uint64_t base, uint64_t exp, u
 }
 
 int main() {
-    DeviceInformation(); // Print GPU info 
+    DeviceInformation(); 
 
-    // RSA parameters (prime factors, modulus, public key, private key, message)
     uint64_t p = 61;
     uint64_t q = 53;
     uint64_t n = p * q;        
@@ -182,8 +170,9 @@ int main() {
         CHECK_CUDA_ERROR(cudaMemcpy(&decrypted, d_result, sizeof(uint64_t), cudaMemcpyDeviceToHost));
         total_decryption_time_ms += stopTimer(start, stop);
 
+        // ERROR VERIFICATION
         int err_cntr = 0;
-        if (decrypted != msg) { // Checks if decrypted message matches original
+        if (decrypted != msg) { 
             printf("\nVerification: FAILED! Decrypted message (%llu) does NOT match original (%llu).\n", decrypted, msg);
             ++err_cntr;
         }
@@ -195,7 +184,7 @@ int main() {
         }
 
 
-        // Performs verification only for the last iteration to avoid redundant prints
+        // PRINT ONLY ON THE LAST ITERATION
         if (i == num_iterations - 1) {
             printf("\n--- Final Verification (from last iteration) ---\n");
             printf("Encrypted Result: %llu\n", cipher);
