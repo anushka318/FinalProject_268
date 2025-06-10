@@ -12,11 +12,6 @@ Use this command to execute
 #include <cuda_runtime.h>
 #include <stdint.h>
 
-int BLOCK_SIZE = 256;
-int NUM_BLOCKS = 32; 
-// Not used currently
-
-
 #define CHECK_CUDA_ERROR(call) { \
     cudaError_t err = call; \
     if (err != cudaSuccess) { \
@@ -48,9 +43,6 @@ float stopTimer(cudaEvent_t start, cudaEvent_t stop) {
 void DeviceInformation() {
     cudaDeviceProp prop; 
     CHECK_CUDA_ERROR(cudaGetDeviceProperties(&prop, 0)); 
-
-    BLOCK_SIZE = 256; 
-    NUM_BLOCKS = prop.multiProcessorCount; 
 
     size_t free_memory, total_memory; 
     CHECK_CUDA_ERROR(cudaMemGetInfo(&free_memory, &total_memory)); 
