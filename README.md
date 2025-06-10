@@ -2,7 +2,7 @@
 
 | File                        | Description                                                                                                                           |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Benchmark.png`             | Summarizing runtime performance across GOU vs CPU                                                                                     |
+| `Benchmark.png`             | Summarizing runtime performance across GPU vs CPU                                                                                     |
 | `Benchmark_GPU.png`         | GPU-specific performance comparison chart                                                                                             |
 | `CuPy_MultiLimb_.ipynb`     | Notebook implementing using CuPy for GPU acceleration with multi-limb support.                                                        |
 | `Plot_visualizations.ipynb` | Notebook for generating benchmark plots and visual analysis of performance data.                                                      |
