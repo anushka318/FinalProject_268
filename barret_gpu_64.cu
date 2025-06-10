@@ -15,7 +15,6 @@ Use this command to execute
 #define CHECK_CUDA_ERROR(call) { \
     cudaError_t err = call; \
     if (err != cudaSuccess) { \
-        fprintf(stderr, "CUDA error in %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(err)); \
         exit(EXIT_FAILURE); \
     } \
 }
@@ -40,7 +39,7 @@ float stopTimer(cudaEvent_t start, cudaEvent_t stop) {
 }
 
 // DEVICE INFORMATION
-void DeviceInformation() {
+void deviceinfo() {
     cudaDeviceProp prop; 
     CHECK_CUDA_ERROR(cudaGetDeviceProperties(&prop, 0)); 
 
@@ -48,8 +47,8 @@ void DeviceInformation() {
     CHECK_CUDA_ERROR(cudaMemGetInfo(&free_memory, &total_memory)); 
     
     printf("GPU: %s\n", prop.name); 
-    printf("Compute Capability: %d.%d\n", prop.major, prop.minor); 
-    printf("Available GPU Memory: %.2f GB\n", free_memory / (1024.0 * 1024.0 * 1024.0));
+    printf("Compute : %d.%d\n", prop.major, prop.minor); 
+    printf(" GPU Mem: %.2f GB\n", free_memory / (1024.0 * 1024.0 * 1024.0));
 
 }
 
@@ -61,7 +60,7 @@ void print_u64(const char* label, uint64_t value) {
 // MU CALCULATION
 uint64_t compute_barrett_mu(uint64_t n) {
     if (n == 0) { 
-        fprintf(stderr, "Error: Modulus - n cannot be zero for Barrett mu calculation\n"); 
+        fprintf(stderr, "Error: Moduluscannot be zero\n"); 
         exit(EXIT_FAILURE); 
     }
     if (n == 1) {
@@ -120,7 +119,7 @@ __global__ void rsa_barrett_kernel(uint64_t* out, uint64_t base, uint64_t exp, u
 }
 
 int main() {
-    DeviceInformation(); 
+    deviceinfo(); 
 
     uint64_t p = 61;
     uint64_t q = 53;
