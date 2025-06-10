@@ -2,17 +2,18 @@
 #include <openssl/bn.h>
 #include <time.h>
 
+// BARRET REDUCTION
 void barrett_reduce(BIGNUM *r, BIGNUM *a, BIGNUM *m, BIGNUM *mu, int k2, BN_CTX *ctx) {
     BIGNUM *q = BN_new();
     BIGNUM *tmp = BN_new();
     BIGNUM *r_tmp = BN_new();
 
-    BN_mul(tmp, a, mu, ctx);   // tmp = a*mu
-    BN_rshift(q, tmp, k2);     // q = floor((a * mu) / 2^(2k))
-    BN_mul(r_tmp, q, m, ctx);  // r_tmp = q * m
-    BN_sub(r, a, r_tmp);       // r = a - q * m 
+    BN_mul(tmp, a, mu, ctx);   
+    BN_rshift(q, tmp, k2);     
+    BN_mul(r_tmp, q, m, ctx); 
+    BN_sub(r, a, r_tmp);      
 
-    while (BN_cmp(r, m) >= 0)  // bring r in range
+    while (BN_cmp(r, m) >= 0)  
         BN_sub(r, r, m);
 
     BN_free(q);
@@ -20,7 +21,7 @@ void barrett_reduce(BIGNUM *r, BIGNUM *a, BIGNUM *m, BIGNUM *mu, int k2, BN_CTX 
     BN_free(r_tmp);
 }
 
-
+// BARRET MODULAR EXPONENTIATION
 void barrett_mod_exp(BIGNUM *result, BIGNUM *base, BIGNUM *exp, BIGNUM *mod, BN_CTX *ctx) {
     BN_CTX_start(ctx);
     BIGNUM *res = BN_CTX_get(ctx);
@@ -28,22 +29,22 @@ void barrett_mod_exp(BIGNUM *result, BIGNUM *base, BIGNUM *exp, BIGNUM *mod, BN_
     BIGNUM *mu  = BN_CTX_get(ctx);
     BIGNUM *two_pow_2k = BN_CTX_get(ctx);
 
-    int k = BN_num_bits(mod);     // bit length of modulus
-    int k2 = 2 * k;               // 2*k for Barret Reduction
+    int k = BN_num_bits(mod);     
+    int k2 = 2 * k;            
 
     BN_copy(tmp, base);
     BN_one(res);                   
 
-    // mu = floor(2^(2k) / mod)
+    // MU CALCULATION
     BN_lshift(two_pow_2k, BN_value_one(), k2);
     BN_div(mu, NULL, two_pow_2k, mod, ctx);
 
     int bits = BN_num_bits(exp);
     for (int i = bits - 1; i >= 0; i--) {
-        BN_mul(res, res, res, ctx);                   // res = res^2
-        barrett_reduce(res, res, mod, mu, k2, ctx);   // res = res mod m
-	// Square and Multiply
-	// Multiply only if the bit is '1', else skip
+        BN_mul(res, res, res, ctx);                  
+        barrett_reduce(res, res, mod, mu, k2, ctx);   
+
+	// Multiply only if the bit is 1
         if (BN_is_bit_set(exp, i)) {
             BN_mul(res, res, tmp, ctx);
             barrett_reduce(res, res, mod, mu, k2, ctx);
@@ -55,7 +56,7 @@ void barrett_mod_exp(BIGNUM *result, BIGNUM *base, BIGNUM *exp, BIGNUM *mod, BN_
 }
 
 
-// --- Benchmark function ---
+// BARRET BENCHMARK FUNCTION
 void benchmark_barrett(int bit_size, int trials) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *base = BN_new();
@@ -66,11 +67,9 @@ void benchmark_barrett(int bit_size, int trials) {
     double total_time = 0;
 
     for (int i = 0; i < trials; i++) {
-        // Generate random inputs based on the input bit size
         BN_rand(base, bit_size, 0, 0);
         BN_rand(exp, bit_size, 0, 0);
-        BN_generate_prime_ex(mod, bit_size, 1, NULL, NULL, NULL);  // safe prime
-	// Genertes safe prime (p-1)/2 is alo prime 
+        BN_generate_prime_ex(mod, bit_size, 1, NULL, NULL, NULL);  // Generate safe prime numbers
         clock_t start = clock();
         barrett_mod_exp(res, base, exp, mod, ctx);
         clock_t end = clock();
@@ -91,7 +90,7 @@ void benchmark_barrett(int bit_size, int trials) {
     BN_CTX_free(ctx);
 }
 
-
+// BN BENCHMARK FUNCTION
 void benchmark_BN_MOD(int bit_size, int trials) {
     BN_CTX *ctx = BN_CTX_new();
     BIGNUM *base = BN_new();
@@ -102,7 +101,6 @@ void benchmark_BN_MOD(int bit_size, int trials) {
     double total_time = 0;
 
     for (int i = 0; i < trials; i++) {
-        // Generate random inputs
         BN_rand(base, bit_size, 0, 0);
         BN_rand(exp, bit_size, 0, 0);
         BN_generate_prime_ex(mod, bit_size, 1, NULL, NULL, NULL);  
