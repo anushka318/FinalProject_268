@@ -59,6 +59,8 @@ void print_u64(const char* label, uint64_t value) {
     printf("%s: %llu (0x%llx)\n", label, value, value); 
 }
 
+
+
 // MU CALCULATION
 uint64_t compute_barrett_mu(uint64_t n) {
     if (n == 0) { 
@@ -95,7 +97,10 @@ __device__ uint64_t barrett_reduce(uint64_t x_low, uint64_t x_high, uint64_t n, 
 
     return (uint64_t)r; 
 }
-
+__device__ uint64_t mod_mul(uint64_t a, uint64_t b, uint64_t n, uint64_t mu) {
+    __uint128_t product = (__uint128_t)a * b;
+    return barrett_reduce((uint64_t)product, (uint64_t)(product >> 64), n, mu);
+}
 // BARRET MODULAR EXPONENTIATION
 __device__ uint64_t modexp_barrett(uint64_t base, uint64_t exp, uint64_t n, uint64_t mu) {
     uint64_t result = 1; 
@@ -103,8 +108,9 @@ __device__ uint64_t modexp_barrett(uint64_t base, uint64_t exp, uint64_t n, uint
 
     while (exp > 0) { 
         if (exp & 1) { 
-            __uint128_t prod = (__uint128_t)result * base; 
-            result = barrett_reduce((uint64_t)prod, (uint64_t)(prod >> 64), n, mu);
+            //result = barrett_reduce((uint64_t)prod, (uint64_t)(prod >> 64), n, mu);
+            result = mod_mul(result, base, n, mu);
+
         }
         __uint128_t prod = (__uint128_t)base * base; 
         base = barrett_reduce((uint64_t)prod, (uint64_t)(prod >> 64), n, mu);
@@ -112,6 +118,7 @@ __device__ uint64_t modexp_barrett(uint64_t base, uint64_t exp, uint64_t n, uint
     }
     return result; 
 }
+
 
 // RSA LAUNCH FUNCTION
 __global__ void rsa_barrett_kernel(uint64_t* out, uint64_t base, uint64_t exp, uint64_t n, uint64_t mu) {
