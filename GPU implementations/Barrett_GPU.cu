@@ -1,6 +1,6 @@
 /*
 
-Use this command to execute
+Use this command to execute in Google Collab
 !nvcc -arch=sm_75 Barrett_GPU.cu -o Barrett_GPU
 !./Barrett_GPU
 
