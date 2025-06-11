@@ -31,6 +31,14 @@ void barrett_reduce(BIGNUM *r, BIGNUM *a, BIGNUM *m, BIGNUM *mu, int k2, BN_CTX 
     BN_free(r_tmp);
 }
 
+// MODULAR MULTIPLICATION
+void mod_mul_barrett(BIGNUM *r, BIGNUM *a, BIGNUM *b, BIGNUM *mod, BIGNUM *mu, int k2, BN_CTX *ctx) {
+    BIGNUM *tmp = BN_new();
+    BN_mul(tmp, a, b, ctx);
+    barrett_reduce(r, tmp, mod, mu, k2, ctx);
+    BN_free(tmp);
+}
+
 // BARRET MOD EXP FUNCTION
 void barrett_mod_exp(BIGNUM *result, BIGNUM *base, BIGNUM *exp, BIGNUM *mod, BN_CTX *ctx) {
     BN_CTX_start(ctx);
@@ -50,11 +58,10 @@ void barrett_mod_exp(BIGNUM *result, BIGNUM *base, BIGNUM *exp, BIGNUM *mod, BN_
 
     int bits = BN_num_bits(exp);
     for (int i = bits - 1; i >= 0; i--) {
-        BN_mul(res, res, res, ctx);
-        barrett_reduce(res, res, mod, mu, k2, ctx);
+        mod_mul_barrett(res, res, res, mod, mu, k2, ctx );
+        
         if (BN_is_bit_set(exp, i)) {
-            BN_mul(res, res, tmp, ctx);
-            barrett_reduce(res, res, mod, mu, k2, ctx);
+        mod_mul_barrett(res, res, tmp, mod, mu, k2, ctx );
         }
     }
 
